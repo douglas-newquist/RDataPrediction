@@ -1,4 +1,4 @@
-CSVs=description-25.csv description-50.csv designation-25.csv title-25.csv description-word-frequency.csv designation-word-frequency.csv title-word-frequency.csv
+CSVs=cnn-confusion.csv svm-linear-confusion.csv svm-poly-confusion.csv knn-confusion.csv random-confusion.csv description-25.csv description-50.csv designation-25.csv title-25.csv description-word-frequency.csv designation-word-frequency.csv title-word-frequency.csv
 
 PLOTS=description.png designation.png title.png wine.png wine-price-tree.png
 
@@ -34,6 +34,18 @@ tokenized.csv: winemag-data-130k-v2.csv tokenizer.py ignored-words.txt
 
 wine-price-tree.png: wine-tree.R
 	Rscript wine-tree.R
+
+random-confusion.csv: random-forest.R description-50.csv
+	Rscript random-forest.R
+
+knn-confusion.csv: knn.R description-50.csv
+	Rscript knn.R
+
+svm-linear-confusion.csv svm-poly-confusion.csv: svm.R description-50.csv
+	Rscript svm.R
+
+cnn-confusion.csv: cnn.R description-50.csv
+	Rscript cnn.R
 
 description.png designation.png title.png wine.png: pairs.R description-word-frequency.csv designation-word-frequency.csv title-word-frequency.csv tokenized.csv
 	Rscript pairs.R

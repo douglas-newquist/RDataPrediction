@@ -1,9 +1,10 @@
 library(class)
+library(caret)
 library(randomForest)
 
 wine = read.csv("description-50.csv")
 wine = na.exclude(wine)
-wine = wine[sample(1:nrow(wine), 25000),]
+#wine = wine[sample(1:nrow(wine), 25000),]
 
 scale = function(x){
   result = (x - min(x)) / (max(x) - min(x))
@@ -11,27 +12,28 @@ scale = function(x){
 
 wine$price = scale(wine$price)
 
-detach(wine)
 attach(wine)
 
 size = nrow(wine)
-training = sample(1:size, size*0.75)
+training = sample(1:size, 20000)
 training.set = wine[training,]
 testing.set = wine[-training,]
 
-points.column = 51
+control = trainControl(method = "cv", number = 10)
+model.knn = train(points ~ .,
+              data = training.set,
+              method = "knn",
+              trControl = control)
 
-training.y = training.set$points
-training.x = training.set[, -points.column]
-testing.x = testing.set[, -points.column]
-testing.y = testing.set$points
+model.knn
 
-knn1 = knn(training.x, testing.x, training.y, k=1)
-knn3 = knn(training.x, testing.x, training.y, k=3)
-knn5 = knn(training.x, testing.x, training.y, k=5)
-knn15 = knn(training.x, testing.x, training.y, k=15)
+predicts = round(predict(model.knn, testing.set))
 
-table(knn1, testing.y)
-table(knn3, testing.y)
-table(knn5, testing.y)
-table(knn15, testing.y)
+sum(abs(predicts - testing.set$points)) / nrow(testing.set)
+sum((predicts - testing.set$points)^2) / nrow(testing.set)
+sqrt(sum((predicts - testing.set$points)^2) / nrow(testing.set))
+
+a = table(predicts, testing.set$points)
+a
+
+write.csv(a, "knn-confusion.csv")

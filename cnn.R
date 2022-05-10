@@ -2,22 +2,41 @@ library(nnet)
 library(caret)
 library(randomForest)
 
-wine = read.csv("description-25.csv")[1:25000,]
-wine = na.exclude(wine)
+wine = read.csv("description-50.csv")
+wine = na.roughfix(wine)
 
-detach(wine)
+scale = function(x){
+  result = (x - min(x)) / (max(x) - min(x))
+}
+
+wine$price = scale(wine$price)
+
 attach(wine)
 
 size = nrow(wine)
-training = sample(1:size, 10000)
+training = sample(1:size, size*0.8)
 training.set = wine[training,]
 testing.set = wine[-training,]
+testing.set = na.roughfix(testing.set)
 
 control = trainControl(method = "cv", number = 10)
-model = train(points ~ .,
-              data = training.set,
-              method = "nnet",
-              trControl = control)
+model.cnn = train(points ~ .,
+                  data = wine,
+                  subset = training,
+                  method = "nnet",
+                  na.action = na.roughfix,
+                  linout = TRUE,
+                  trControl = control)
 
-predicts = predict(model, testing.set)
+model.cnn
+
+predicts = round(predict(model.cnn, testing.set))
+
+sum(abs(predicts - testing.set$points)) / nrow(testing.set)
 sum((predicts - testing.set$points)^2) / nrow(testing.set)
+sqrt(sum((predicts - testing.set$points)^2) / nrow(testing.set))
+
+a = table(predicts, testing.set$points)
+a
+
+write.csv(a, "cnn-confusion.csv")

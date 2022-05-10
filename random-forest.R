@@ -1,21 +1,34 @@
 library(class)
+library(caret)
 library(randomForest)
 
-wine = read.csv("description-25.csv")
+wine = read.csv("description-50.csv")
 wine = na.exclude(wine)
 
-detach(wine)
+#detach(wine)
 attach(wine)
 
 size = nrow(wine)
-training = sample(1:size, 10000)
+training = sample(1:size, floor(size*0.5))
 training.set = wine[training,]
 testing.set = wine[-training,]
 
-model = randomForest(points ~ .,
+control = trainControl(method = "cv", number = 10)
+model.forest = randomForest(points ~ .,
                      training.set,
-                     num.trees=100,
-                     max.depth=8)
+                     ntrees = 25,
+                     max.depth = 4,
+                     trControl = control)
 
-predicts = predict(model, testing.set)
+model.forest
+
+predicts = round(predict(model.forest, testing.set))
+
+sum(abs(predicts - testing.set$points)) / nrow(testing.set)
 sum((predicts - testing.set$points)^2) / nrow(testing.set)
+sqrt(sum((predicts - testing.set$points)^2) / nrow(testing.set))
+
+a = table(predicts, testing.set$points)
+a
+
+write.csv(a, "random-confusion.csv")
